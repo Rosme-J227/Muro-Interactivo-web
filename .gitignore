@@ -1,0 +1,44 @@
+node_modules/
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+.vite/
+
+# Environment files
+.env
+.env.*
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Cache
+.cache/
+
+# Misc
+coverage/
+*.log
+
+# .NET / NuGet caches (user-level, exclude if accidentally added)
+.nuget/
+.dotnet/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+

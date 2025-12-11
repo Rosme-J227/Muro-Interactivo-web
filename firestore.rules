@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public posts read
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.keys().hasAll(["content","authorId","authorName","createdAt"]) ;
+      // allow general updates by the post author
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+
+      // allow controlled updates to likesCount by any authenticated user
+      allow update: if request.auth != null && (
+        // post author can update anything (covered above) OR
+        (request.resource.data.keys().hasOnly(["likesCount"]) && (
+          request.resource.data.likesCount == resource.data.likesCount + 1 ||
+          request.resource.data.likesCount == resource.data.likesCount - 1
+        ))
+      );
+
+      // comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid && request.resource.data.text is string;
+        allow delete: if request.auth != null && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid);
+      }
+
+      // likes subcollection: each user can create/delete their like doc
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.uid == likeId;
+        allow delete: if request.auth != null && request.auth.uid == likeId;
+      }
+    }
+
+    // users collection: only read public info, write only by auth user to their doc
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+      // notifications subcollection under users
+      match /notifications/{notificationId} {
+        // only the owner can read/update/delete their notifications
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+        // allow others (e.g., the liker) to create a notification for this user
+        allow create: if request.auth != null && request.resource.data.from is string && request.resource.data.postId is string;
+      }
+    }
+  }
+}
