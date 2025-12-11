@@ -21,17 +21,12 @@ export default function CreatePost(){
           file = await resizeImage(file, 1200)
         }catch(e){ console.warn('Image resize failed, uploading original', e) }
       }
-      // add timeout so UI doesn't stay stuck if network/storage hangs
-      const createPromise = createPost({
+      const res = await createPost({
         content: data.content,
         authorId: user.uid,
         authorName: user.displayName || user.email,
         file
       })
-      const res = await Promise.race([
-        createPromise,
-        new Promise((_, rej) => setTimeout(()=> rej(new Error('timeout')), 20000))
-      ])
       console.log('createPost result', res)
       // if backend didn't return an id, consider it failed
       if(!res || !res.id){
