@@ -9,12 +9,24 @@ service cloud.firestore {
       // allow general updates by the post author
       allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
 
-      // allow controlled updates to likesCount by any authenticated user
+      // allow controlled updates to likesCount and commentsCount by any authenticated user
+      // This permits simple increments/decrements to counts without requiring full author privileges.
       allow update: if request.auth != null && (
-        // post author can update anything (covered above) OR
+        // allow updating only likesCount and/or commentsCount using atomic increments
         (request.resource.data.keys().hasOnly(["likesCount"]) && (
           request.resource.data.likesCount == resource.data.likesCount + 1 ||
           request.resource.data.likesCount == resource.data.likesCount - 1
+        ))
+        ||
+        (request.resource.data.keys().hasOnly(["commentsCount"]) && (
+          request.resource.data.commentsCount == resource.data.commentsCount + 1 ||
+          request.resource.data.commentsCount == resource.data.commentsCount - 1
+        ))
+        ||
+        // or allow updating both counts at once if they change by +/-1 appropriately
+        (request.resource.data.keys().hasOnly(["likesCount","commentsCount"]) && (
+          (request.resource.data.likesCount == resource.data.likesCount + 1 || request.resource.data.likesCount == resource.data.likesCount - 1) &&
+          (request.resource.data.commentsCount == resource.data.commentsCount + 1 || request.resource.data.commentsCount == resource.data.commentsCount - 1)
         ))
       );
 

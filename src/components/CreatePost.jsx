@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import useAuth from '../store/useAuth'
@@ -7,6 +7,7 @@ import { createPost } from '../services/postsService'
 export default function CreatePost(){
   const { user } = useAuth()
   const { register, handleSubmit, reset } = useForm()
+  const fileRef = useRef(null)
   const [loading, setLoading] = useState(false)
 
   const onSubmit = async (data) => {
@@ -37,6 +38,8 @@ export default function CreatePost(){
         toast.error('No se pudo guardar el post en el servidor')
       }else{
         reset()
+        // clear file input value explicitly
+        try{ if(fileRef.current) fileRef.current.value = '' }catch(e){}
         toast.success('Post creado')
       }
     }catch(e){
@@ -76,7 +79,7 @@ export default function CreatePost(){
         <div className="flex-1">
           <textarea {...register('content', { required: true })} placeholder="¿Qué estás pensando?" className="w-full input-large create-textarea border mb-3" rows="4"></textarea>
           <div className="flex items-center gap-3">
-            <input type="file" {...register('media')} accept="image/*" />
+            <input ref={fileRef} type="file" {...register('media')} accept="image/*" />
             <div className="ml-auto">
               <button disabled={loading} className="btn-primary btn-large">{loading ? 'Publicando...' : 'Publicar'}</button>
             </div>
